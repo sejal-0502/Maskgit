@@ -1,0 +1,52 @@
+model:
+  base_learning_rate: 0.0001
+  target: models.maskgit_next_frame.MaskGITNextFrame
+  params:
+    num_frames: 4
+    drop_frame: 0.0
+    drop_token: 0.1
+    input_rescale: false
+    adjust_lr_to_batch_size: false
+    tokenizer_config:
+      folder: /p/scratch/genai-ad/mittal3/logs/2024-08-13T17-12-04_custom_vqgan_f16_4096_dim32_L3_exp6_2542238
+    predictor_config:
+      target: Network.transformer.MaskTransformerNextFrame
+      params:
+        img_size: 256
+        hidden_dim: 768
+        depth: 24
+        heads: 16
+        mlp_dim: 3072
+        dropout: 0.1
+        num_frames: 4
+        codebook_size: 4096
+    loss_config:
+      target: torch.nn.CrossEntropyLoss
+      params:
+        label_smoothing: 0.1
+    scheduler_config:
+      target: modules.schedulers.maskgit_scheduler.UnconditionalMaskGITScheduler
+      params:
+        default_schedule_mode: arccos
+        default_num_steps: 12
+        disable_bar: true
+        codebook_size: 4096
+        num_tokens: 16
+        mask_value: 4096
+data:
+  target: main_pl.DataModuleFromConfig
+  params:
+    batch_size: 8
+    num_workers: 8
+    train:
+      target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
+      params:
+        hdf5_paths_file: /p/scratch/genai-ad/mittal3/datasets/bdd100k_h5/videos/train/day_clear_all_filtered/train_bdd_day_clear_all_filtered_2k_videos.txt
+        size: 256
+        num_frames: 4
+    validation:
+      target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
+      params:
+        hdf5_paths_file: /p/scratch/genai-ad/mittal3/datasets/bdd100k_h5/videos/val/day_clear/val_bdd_day_clear_200_videos.txt
+        size: 256
+        num_frames: 4
