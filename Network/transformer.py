@@ -111,7 +111,7 @@ class TransformerEncoder(nn.Module):
         return x, l_attn
 
 class MaskTransformer(nn.Module):
-    def __init__(self, img_size=256, patch_size=16, hidden_dim=768, codebook_size=16384, depth=16, heads=8, mlp_dim=3072, dropout=0.1, nclass=1000):
+    def __init__(self, num_tokens, img_size=256, patch_size=16, hidden_dim=768, codebook_size=16384, depth=16, heads=8, mlp_dim=3072, dropout=0.1, nclass=1000):
         """ Initialize the Transformer model.
             :param:
                 img_size       -> int:     Input image size (default: 256)
@@ -127,10 +127,14 @@ class MaskTransformer(nn.Module):
         super().__init__()
         self.nclass = nclass
         self.patch_size = patch_size
-        self.num_tokens = img_size // self.patch_size
+        # self.num_tokens = img_size // self.patch_size # needs to be changed
+        self.num_tokens = num_tokens # needs to be changed
         self.codebook_size = codebook_size
-        self.tok_emb = nn.Embedding(codebook_size+1, hidden_dim)  
-        self.pos_emb = nn.init.trunc_normal_(nn.Parameter(torch.zeros(1, (self.num_tokens*self.num_tokens), hidden_dim)), 0., 0.02)
+        self.tok_emb = nn.Embedding(codebook_size+1, hidden_dim)  # converys each token to 768 dim vector
+        # self.pos_emb = nn.init.trunc_normal_(nn.Parameter(torch.zeros(1, (self.num_tokens*self.num_tokens), hidden_dim)), 0., 0.02)
+        self.pos_emb = nn.init.trunc_normal_(nn.Parameter(torch.zeros(1, (self.num_tokens), hidden_dim)), 0., 0.02) 
+        # positional embedding of size [1, 256, 768]
+
 
         # First layer before the Transformer block
         self.first_layer = nn.Sequential(
@@ -155,7 +159,8 @@ class MaskTransformer(nn.Module):
         )
 
         # Bias for the last linear output
-        self.bias = nn.Parameter(torch.zeros((self.num_tokens*self.num_tokens), codebook_size+1))
+        # self.bias = nn.Parameter(torch.zeros((self.num_tokens*self.num_tokens), codebook_size+1))
+        self.bias = nn.Parameter(torch.zeros((self.num_tokens), codebook_size+1))
 
     def forward(self, img_token, return_attn=False):
         """ Forward.
@@ -166,10 +171,12 @@ class MaskTransformer(nn.Module):
                 logit:         -> torch.FloatTensor: bsize x path_size*path_size * 1024, the predicted logit
                 attn:          -> list(torch.FloatTensor): list of attention for visualization
         """
-        b, w, h = img_token.size()
-        input = img_token.view(b, -1)
+        print("Img_token shape in MaskTransformer:", img_token.shape) # [b, 16, 16]
+        # b, w, h = img_token.size() # [b, 16, 16]
+        b, n = img_token.size() # [b, 64]
+        input = img_token.view(b, -1) # [b, 64]
 
-        tok_embeddings = self.tok_emb(input)
+        tok_embeddings = self.tok_emb(input) # [b, 64, 768]
 
         # Position embedding
         pos_embeddings = self.pos_emb
@@ -184,7 +191,7 @@ class MaskTransformer(nn.Module):
 
         if return_attn:  # return list of attention
             return logit[:, :self.num_tokens * self.num_tokens, :self.codebook_size + 1], attn
-
+        print("Logit shape in MaskTransformer:", logit.shape) # [b, 64, 16385]
         return logit[:, :self.num_tokens*self.num_tokens, :self.codebook_size+1]
 
 

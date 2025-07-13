@@ -1,0 +1,108 @@
+Sun Jul 13 10:17:16 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.133.20             Driver Version: 570.133.20     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce GTX 1080 Ti     On  |   00000000:02:00.0 Off |                  N/A |
+| 29%   37C    P8              9W /  250W |       3MiB /  11264MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA GeForce GTX 1080 Ti     On  |   00000000:03:00.0 Off |                  N/A |
+| 27%   32C    P8              8W /  250W |       3MiB /  11264MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+>>> Logging to /work/dlclarge2/mutakeks-titok/maskgit_1d_dinov264
+>>> Last git commit: 517333833a3643fd01ac19aada49099d5107cc8a training code working *with uncommitted changes*
+Working with z of shape (1, 768, 14, 14) = 150528 dimensions.
+loaded pretrained LPIPS loss from taming/modules/autoencoder/lpips/vgg.pth
+<class 'taming.modules.losses.vqperceptual_dino.VQLPIPSWithDiscriminatorEntropyDINOLoss'> running with hinge loss.
+loaded pretrained LPIPS loss from taming/modules/autoencoder/lpips/vgg.pth
+<class 'taming.modules.losses.vqperceptual_dino.VQLPIPSWithDiscriminatorEntropyDINOLoss'> running with hinge loss.
+Loaded with 3 missing keys and 24 unexpected keys
+Missing keys:
+['prompt_tokens', 'head.weight', 'head.bias']
+Unexpected Keys: 
+['blocks.0.ls1.gamma', 'blocks.0.ls2.gamma', 'blocks.1.ls1.gamma', 'blocks.1.ls2.gamma', 'blocks.2.ls1.gamma', 'blocks.2.ls2.gamma', 'blocks.3.ls1.gamma', 'blocks.3.ls2.gamma', 'blocks.4.ls1.gamma', 'blocks.4.ls2.gamma', 'blocks.5.ls1.gamma', 'blocks.5.ls2.gamma', 'blocks.6.ls1.gamma', 'blocks.6.ls2.gamma', 'blocks.7.ls1.gamma', 'blocks.7.ls2.gamma', 'blocks.8.ls1.gamma', 'blocks.8.ls2.gamma', 'blocks.9.ls1.gamma', 'blocks.9.ls2.gamma', 'blocks.10.ls1.gamma', 'blocks.10.ls2.gamma', 'blocks.11.ls1.gamma', 'blocks.11.ls2.gamma']
+Number of tokens: 64
+Embedding shape: torch.Size([4096, 16])
+Logging to /work/dlclarge2/mutakeks-titok/maskgit_1d_dinov264
+Logging with name tb
+2025-07-13 10:18:21.773729 - DATA CLASS INSTANTIATED
+Total length: 158903
+Total length: 39818
+2025-07-13 10:18:22.480262 - DATA SETUP COMPLETE
+Setting learning rate to 1.00e-04 (base learning rate)
+Num iters per epoch: 19862
+Total length: 158903
+Total length: 39818
+Total length: 158903
+Total length: 39818
+Project config
+model:
+  base_learning_rate: 0.0001
+  target: models.maskgit.MaskGIT
+  params:
+    adjust_lr_to_batch_size: false
+    tokenizer_config:
+      folder: /work/dlclarge2/mutakeks-storage_titok/dino_v2_64
+      checkpoint_folder: checkpoints/checkpoints/checkpoints/checkpoints/last.ckpt
+    predictor_config:
+      target: Network.transformer.MaskTransformer
+      params:
+        img_size: 256
+        hidden_dim: 768
+        depth: 16
+        heads: 8
+        mlp_dim: 3072
+        dropout: 0.1
+        codebook_size: 4096
+        num_tokens: 64
+    loss_config:
+      target: torch.nn.CrossEntropyLoss
+      params:
+        label_smoothing: 0.1
+    scheduler_config:
+      target: modules.schedulers.maskgit_scheduler.UnconditionalMaskGITScheduler
+      params:
+        default_schedule_mode: arccos
+        default_num_steps: 12
+        disable_bar: true
+        codebook_size: 4096
+        num_tokens: 16
+        mask_value: 4096
+data:
+  target: main_pl.DataModuleFromConfig
+  params:
+    batch_size: 4
+    num_workers: 8
+    train:
+      target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
+      params:
+        hdf5_paths_file: /work/dlcsmall2/mittal-bdd-data/video_data/train.txt
+        size: 256
+        num_frames: 1
+    validation:
+      target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
+      params:
+        hdf5_paths_file: /work/dlcsmall2/mittal-bdd-data/video_data/val.txt
+        size: 256
+        num_frames: 1
+
+Lightning config
+trainer:
+  distributed_backend: ddp
+
+Training: |          | 0/? [00:00<?, ?it/s]Training:   0%|          | 0/19863 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/19863 [00:00<?, ?it/s] Shape of X in get_input in else: torch.Size([4, 3, 256, 256])
+Shape of input x: torch.Size([4, 3, 256, 256])
+Summoning checkpoint.

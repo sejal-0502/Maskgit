@@ -18,9 +18,9 @@ from pytorch_lightning.profilers import PyTorchProfiler, AdvancedProfiler
 from callbacks.logging import ImageLogger
 import sys
 sys.path.append('../')
-import visual_tokenization
-from visual_tokenization.callbacks import SetupCallback, PeriodicCheckpoint, SaveCheckpointEveryNSteps
-from visual_tokenization.taming.data.utils import custom_collate
+# import visual_tokenization
+from final_titok.MastersProject_TiTok.callbacks import SetupCallback, PeriodicCheckpoint, SaveCheckpointEveryNSteps
+from final_titok.MastersProject_TiTok.taming.data.utils import custom_collate
 sys.path.append('./')
 
 import warnings
@@ -216,6 +216,18 @@ def get_parser(**parser_kwargs):
         default=2000,
         help="log image frequency",
     )
+    parser.add_argument(
+        "--checkpoint_dir",
+        type=str,
+        default=None,
+        help="Custom directory to save checkpoints"
+    )
+    parser.add_argument(
+        "--logdir",
+        type=str,
+        default="/work/dlclarge2/mutakeks-titok/maskgit_1d_dinov264",  # default value
+        help="Directory to save vqgan logs"
+    )
 
     return parser
 
@@ -327,11 +339,15 @@ if __name__ == "__main__":
     if opt.resume:
         if not os.path.exists(opt.resume):
             raise ValueError("Cannot find {}".format(opt.resume))
+        # if os.path.isfile(opt.resume):
+        #     # determine logdir from checkpoint
+        #     paths = opt.resume.split("/")
+        #     idx = len(paths)-paths[::-1].index("logs")+1
+        #     logdir = "/".join(paths[:idx])
+        #     ckpt = opt.resume
+        #     print(f"Resuming from checkpoint {opt.resume}, logdir: {logdir}")
         if os.path.isfile(opt.resume):
-            # determine logdir from checkpoint
-            paths = opt.resume.split("/")
-            idx = len(paths)-paths[::-1].index("logs")+1
-            logdir = "/".join(paths[:idx])
+            logdir = os.path.dirname(opt.resume)
             ckpt = opt.resume
             print(f"Resuming from checkpoint {opt.resume}, logdir: {logdir}")
         else:
@@ -350,19 +366,26 @@ if __name__ == "__main__":
         _tmp = logdir.split("/")
         nowname = _tmp[-1]
     else:
-        if opt.name:
-            name = "_"+opt.name
-        elif opt.base:
-            cfg_fname = os.path.split(opt.base[0])[-1]
-            cfg_name = os.path.splitext(cfg_fname)[0]
-            name = "_"+cfg_name
+        # if opt.name:
+        #     name = "_"+opt.name
+        # elif opt.base:
+        #     cfg_fname = os.path.split(opt.base[0])[-1]
+        #     cfg_name = os.path.splitext(cfg_fname)[0]
+        #     name = "_"+cfg_name
+        # else:
+        #     name = ""
+        # nowname = now+name+opt.postfix+"_"+get_jobid()
+        # try:
+        #     logdir = os.path.join(os.environ.get("MASKGIT_WORK_DIR", "logs"), nowname)
+        # except KeyError:
+        #     logdir = os.path.join("logs", nowname)
+        if opt.logdir:
+            logdir = opt.logdir  # Use the custom log directory path provided by user
         else:
+            # Default behavior
             name = ""
-        nowname = now+name+opt.postfix+"_"+get_jobid()
-        try:
-            logdir = os.path.join(os.environ.get("MASKGIT_WORK_DIR", "logs"), nowname)
-        except KeyError:
-            logdir = os.path.join("logs", nowname)
+            nowname = now + name + opt.postfix + "_" + get_jobid()
+            logdir = os.path.join(os.environ.get("VQ_WORK_DIR", "vqgan_logs"), nowname)
         
     print(">>> Logging to {}".format(logdir))
     print(">>> Last git commit: {} {}".format(get_git_last_commit(), "*with uncommitted changes*" if get_git_has_uncommitted_changes() else ""))

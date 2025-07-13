@@ -24,7 +24,7 @@ class RandomResizedCenterCrop(object):
     def get_params(self, img):
         if self.fixed_params is None:
             width, height = img.size
-            area = height * width
+            area = height * width # calculate area of the image
             aspect_ratio = width / height
 
             target_area = random.uniform(*self.scale) * area
@@ -51,7 +51,8 @@ class MultiHDF5DatasetMultiFrame(Dataset):
         #if frame_rate != 1: raise NotImplementedError('frame_rate != 1 not tested yet')
         self.frame_rate = frame_rate  # how many frames to skip, e.g. if data is stored at 10Hz but we want 5Hz, frame_rate=2
         with open(os.path.expandvars(hdf5_paths_file), 'r') as f:
-            self.hdf5_paths = f.read().splitlines()
+            # self.hdf5_paths = f.read().splitlines()
+            self.hdf5_paths = [line.strip() for line in f if line.strip()]
 
         #self.files = [h5py.File(path, 'r') for path in self.hdf5_paths]
         self.files = [h5py.File(path, 'r', rdcc_nbytes=1024*1024*1024*500, rdcc_nslots=375000) for path in self.hdf5_paths]

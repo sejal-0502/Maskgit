@@ -30,6 +30,7 @@ class UnconditionalMaskGITScheduler(pl.LightningModule):
             mask        -> torch.LongTensor(): bsize * 16 * 16, the binary mask of the mask
         """
         mode = mode or self.default_schedule_mode_train
+        batch_size, seq_len = code.shape
         r = torch.rand(code.size(0))
         if mode == "linear":                # linear scheduler
             val_to_mask = r
@@ -52,7 +53,7 @@ class UnconditionalMaskGITScheduler(pl.LightningModule):
 
         mask_code = code.detach().clone()
         # Sample the amount of tokens + localization to mask
-        mask = torch.rand(size=code.size()) < val_to_mask.view(code.size(0), 1, 1)
+        mask = torch.rand(size=code.size()) < val_to_mask.view(batch_size, 1)  # mask tensor with the same shape as code
 
         if value > 0:  # Mask the selected token by the value
             mask_code[mask] = torch.full_like(mask_code[mask], value)

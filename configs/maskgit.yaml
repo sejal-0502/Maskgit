@@ -4,7 +4,9 @@ model:
   params:
     adjust_lr_to_batch_size: false
     tokenizer_config:
-      folder: /work/dlcsmall2/mittal-bdd-data/pretrained_tokenizer/2024-08-13T17-12-04_custom_vqgan_f16_4096_dim32_L3_exp6_2542238
+      # folder: /work/dlcsmall2/mittal-bdd-data/pretrained_tokenizer/2024-08-13T17-12-04_custom_vqgan_f16_4096_dim32_L3_exp6_2542238
+      folder: /work/dlclarge2/mutakeks-storage_titok/dino_v2_64
+      checkpoint_folder: checkpoints/checkpoints/checkpoints/checkpoints/last.ckpt
     predictor_config:
       target: Network.transformer.MaskTransformer
       params:
@@ -15,6 +17,7 @@ model:
         mlp_dim: 3072
         dropout: 0.1
         codebook_size: 4096
+        num_tokens: 64
     loss_config:
       target: torch.nn.CrossEntropyLoss
       params:
@@ -31,7 +34,7 @@ model:
 data:
   target: main_pl.DataModuleFromConfig
   params:
-    batch_size: 8
+    batch_size: 4
     num_workers: 8
     train:
       target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
