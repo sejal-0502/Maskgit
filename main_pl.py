@@ -225,7 +225,7 @@ def get_parser(**parser_kwargs):
     parser.add_argument(
         "--logdir",
         type=str,
-        default="/work/dlclarge2/mutakeks-titok/maskgit_1d_dinov264",  # default value
+        default="/work/dlclarge2/mutakeks-titok/maskgit_test",  # default value
         help="Directory to save vqgan logs"
     )
 

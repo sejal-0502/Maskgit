@@ -111,7 +111,7 @@ class TransformerEncoder(nn.Module):
         return x, l_attn
 
 class MaskTransformer(nn.Module):
-    def __init__(self, num_tokens, img_size=256, patch_size=16, hidden_dim=768, codebook_size=16384, depth=16, heads=8, mlp_dim=3072, dropout=0.1, nclass=1000):
+    def __init__(self, num_tokens, patch_size, img_size=224, hidden_dim=768, codebook_size=16384, depth=16, heads=8, mlp_dim=3072, dropout=0.1, nclass=1000):
         """ Initialize the Transformer model.
             :param:
                 img_size       -> int:     Input image size (default: 256)
@@ -196,7 +196,7 @@ class MaskTransformer(nn.Module):
 
 
 class MaskTransformerNextFrame(MaskTransformer):
-    def __init__(self, img_size=256, patch_size=16, hidden_dim=768, codebook_size=16384, depth=24, heads=8, mlp_dim=3072, dropout=0.1, num_frames=4):
+    def __init__(self, patch_size, img_size=224, hidden_dim=768, codebook_size=16384, depth=24, heads=8, mlp_dim=3072, dropout=0.1, num_frames=4):
         """ Initialize the Transformer model.
             :param:
                 img_size       -> int:     Input image size (default: 256)
@@ -246,7 +246,7 @@ class MaskTransformerNextFrame(MaskTransformer):
 
 
 class MaskTransformerNextFrameSep(MaskTransformerNextFrame):
-    def __init__(self, img_size=256, patch_size=16, hidden_dim=768, codebook_size=16384, depth=24, heads=8, mlp_dim=3072, dropout=0.1, num_frames=5):
+    def __init__(self, patch_size, img_size=224, hidden_dim=768, codebook_size=16384, depth=24, heads=8, mlp_dim=3072, dropout=0.1, num_frames=5):
         super().__init__(img_size, patch_size, hidden_dim, codebook_size, depth, heads, mlp_dim, dropout, num_frames)
         #self.pos_emb = nn.init.trunc_normal_(nn.Parameter(torch.zeros(1, (self.num_tokens*self.num_tokens), hidden_dim)), 0., 0.02)
         #self.bias = nn.Parameter(torch.zeros((self.num_tokens*self.num_tokens), codebook_size+1))
@@ -304,7 +304,7 @@ class MaskTransformerNextFrameSep(MaskTransformerNextFrame):
 
 
 class MaskTransformerNextFrameSep3x(MaskTransformerNextFrame):
-    def __init__(self, img_size=256, patch_size=16, hidden_dim=768, codebook_size=16384, depth=24, heads=8, mlp_dim=3072, dropout=0.1, num_frames=5):
+    def __init__(self, patch_size, img_size=224, hidden_dim=768, codebook_size=16384, depth=24, heads=8, mlp_dim=3072, dropout=0.1, num_frames=5):
         super().__init__(img_size, patch_size, hidden_dim, codebook_size, depth, heads, mlp_dim, dropout, num_frames)
         #self.pos_emb = nn.init.trunc_normal_(nn.Parameter(torch.zeros(1, (self.num_tokens*self.num_tokens), hidden_dim)), 0., 0.02)
         #self.bias = nn.Parameter(torch.zeros((self.num_tokens*self.num_tokens), codebook_size+1))

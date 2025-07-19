@@ -17,10 +17,11 @@ from final_titok.MastersProject_TiTok.taming.util import instantiate_from_config
 
 class MaskGIT(pl.LightningModule):
 
-    def __init__(self, *, tokenizer_config, predictor_config, loss_config, scheduler_config, num_tokens=64, patch_size=16, image_size=256, grad_acc_steps=1, adjust_lr_to_batch_size=False, load_tokenizer_checkpoint=True):
+    def __init__(self, *, tokenizer_config, predictor_config, loss_config, scheduler_config, patch_size, num_tokens, image_size, grad_acc_steps=1, adjust_lr_to_batch_size=False, load_tokenizer_checkpoint=True):
         """ Initialization of the model (VQGAN and Masked Transformer), optimizer, criterion, etc."""
         super().__init__()
         self.patch_size = patch_size
+        self.num_tokens = num_tokens
         self.image_size = image_size
         self.grad_acc_steps = grad_acc_steps
         self.adjust_lr_to_batch_size = adjust_lr_to_batch_size
@@ -346,24 +347,30 @@ class MaskGIT(pl.LightningModule):
         l_codes = []  # Save the intermediate codes predicted
         l_mask = []   # Save the intermediate masks
         with torch.no_grad():
-            drop = torch.ones(num_samples, dtype=torch.bool).to(self.device)
+            drop = torch.ones(num_samples, dtype=torch.bool).to(self.device) # 'drop' drops a few tokens from input
             if init_code is not None:  # Start with a pre-define code
                 code = init_code
-                mask = (init_code == self.codebook_size).float().view(num_samples, self.num_tokens*self.num_tokens)
+                print("Shape of init_code:", init_code.shape)  # [1, 256, 3, 256]
+                mask = (init_code == self.codebook_size).float().view(num_samples, self.num_tokens*self.num_tokens) # mark tokens that need to be predicted
             else:  # Initialize a code
                 if self.mask_value < 0:  # Code initialize with random tokens
                     # code = torch.randint(0, self.codebook_size, (num_samples, self.num_tokens, self.num_tokens)).to(self.device)
                     code = torch.randint(0, self.codebook_size, (num_samples, self.num_tokens)).to(self.device)
+                    # print("Else if is implemented")
                 else:  # Code initialize with masked tokens
                     # code = torch.full((num_samples, self.num_tokens, self.num_tokens), self.mask_value).to(self.device)
-                    code = torch.full((num_samples, self.num_tokens), self.mask_value).to(self.device)
+                    code = torch.full((num_samples, self.num_tokens), self.mask_value).to(self.device) # all the tokens are masked
+                    # print("Else else is implemented")
+                    # print("Code shape:", code.shape) # [4, 64]
                 # mask = torch.ones(num_samples, self.num_tokens*self.num_tokens).to(self.device)
                 mask = torch.ones(num_samples, self.num_tokens).to(self.device)
+                # print("Else is implemented")
+                # print("Mask shape:", mask.shape) # [4, 64]
 
             # Instantiate scheduler
-            scheduler = self.scheduler.adap_sche(num_steps, schedule_mode)
+            scheduler = self.scheduler.adap_sche(num_steps, schedule_mode) # (12, arccos) = decode happens accross 12 steps
 
-            # Beginning of sampling, t = number of token to predict a step "indice"
+            # Beginning of sampling, t = number of token to predict a step "indice". Each step predicts t masked tokens
             for indice, t in enumerate(scheduler):
                 if mask.sum() < t:  # Cannot predict more token than 16*16 or 32*32
                     t = int(mask.sum().item())
@@ -380,8 +387,10 @@ class MaskGIT(pl.LightningModule):
                     _w = w * (indice / (len(scheduler)-1))
                     # Classifier Free Guidance
                     logit = (1 + _w) * logit_c - _w * logit_u
+                    # print("Conditioned prediction")
                 else:
-                    logit = self.vit(code.clone())
+                    logit = self.vit(code.clone()) # this means a single forward pass, no confition
+                    # print("Normal prediction") 
 
                 prob = torch.softmax(logit * sm_temp, -1)
                 # Sample the code from the softmax prediction
@@ -389,7 +398,7 @@ class MaskGIT(pl.LightningModule):
                 pred_code = distri.sample()
 
                 # conf = torch.gather(prob, 2, pred_code.view(num_samples, self.num_tokens*self.num_tokens, 1))
-                conf = torch.gather(prob, 2, pred_code.view(num_samples, self.num_tokens, 1))
+                conf = torch.gather(prob, 2, pred_code.view(num_samples, self.num_tokens, 1)) # extract softmax probab of predited token
 
                 if randomize == "linear":  # add gumbel noise decreasing over the sampling process
                     ratio = (indice / (len(scheduler)-1))
@@ -404,11 +413,11 @@ class MaskGIT(pl.LightningModule):
                 # do not predict on already predicted tokens
                 conf[~mask.bool()] = -math.inf
 
-                # chose the predicted token with the highest confidence
+                # choose the predicted token with the highest confidence, i.e pick top t most confident tokens
                 tresh_conf, indice_mask = torch.topk(conf.view(num_samples, -1), k=t, dim=-1)
                 tresh_conf = tresh_conf[:, -1]
 
-                # replace the chosen tokens
+                # replace the chosen tokens, i.e updates the code and mask with the predicted tokens
                 # conf = (conf >= tresh_conf.unsqueeze(-1)).view(num_samples, self.num_tokens, self.num_tokens)
                 conf = (conf >= tresh_conf.unsqueeze(-1)).view(num_samples, self.num_tokens)
                 # f_mask = (mask.view(num_samples, self.num_tokens, self.num_tokens).float() * conf.view(num_samples, self.num_tokens, self.num_tokens).float()).bool()

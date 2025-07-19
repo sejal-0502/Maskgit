@@ -81,3 +81,78 @@ Restored all states from the checkpoint at /work/dlclarge2/mutakeks-titok/maskgi
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/ce_loss', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/ce_loss_window', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:384: `ModelCheckpoint(monitor='val/ce_loss')` could not find the monitored key in the returned metrics: ['train/ce_loss', 'train/ce_loss_step', 'train/ce_loss_window', 'train/ce_loss_window_step', 'lr-AdamW', 'train/ce_loss_epoch', 'train/ce_loss_window_epoch', 'epoch', 'step']. HINT: Did you call `log('val/ce_loss', value)` in the `LightningModule`?
+`Trainer.fit` stopped: `max_epochs=30` reached.
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/mutakeks/maskgit_1d/maskgit_img/main_pl.py", line 525, in <module>
+[rank0]:     trainer.test(model, data)
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 749, in test
+[rank0]:     return call._call_and_handle_interrupt(
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 46, in _call_and_handle_interrupt
+[rank0]:     return trainer.strategy.launcher.launch(trainer_fn, *args, trainer=trainer, **kwargs)
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/strategies/launchers/subprocess_script.py", line 105, in launch
+[rank0]:     return function(*args, **kwargs)
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 789, in _test_impl
+[rank0]:     results = self._run(model, ckpt_path=ckpt_path)
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 932, in _run
+[rank0]:     _verify_loop_configurations(self)
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/configuration_validator.py", line 41, in _verify_loop_configurations
+[rank0]:     __verify_eval_loop_configuration(model, "test")
+[rank0]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/configuration_validator.py", line 106, in __verify_eval_loop_configuration
+[rank0]:     raise MisconfigurationException(f"No `{step_name}()` method defined to run `Trainer.{trainer_method}`.")
+[rank0]: lightning_fabric.utilities.exceptions.MisconfigurationException: No `test_step()` method defined to run `Trainer.test`.
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/home/mutakeks/maskgit_1d/maskgit_img/main_pl.py", line 525, in <module>
+[rank1]:     trainer.test(model, data)
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 749, in test
+[rank1]:     return call._call_and_handle_interrupt(
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 46, in _call_and_handle_interrupt
+[rank1]:     return trainer.strategy.launcher.launch(trainer_fn, *args, trainer=trainer, **kwargs)
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/strategies/launchers/subprocess_script.py", line 105, in launch
+[rank1]:     return function(*args, **kwargs)
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 789, in _test_impl
+[rank1]:     results = self._run(model, ckpt_path=ckpt_path)
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 932, in _run
+[rank1]:     _verify_loop_configurations(self)
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/configuration_validator.py", line 41, in _verify_loop_configurations
+[rank1]:     __verify_eval_loop_configuration(model, "test")
+[rank1]:   File "/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/configuration_validator.py", line 106, in __verify_eval_loop_configuration
+[rank1]:     raise MisconfigurationException(f"No `{step_name}()` method defined to run `Trainer.{trainer_method}`.")
+[rank1]: lightning_fabric.utilities.exceptions.MisconfigurationException: No `test_step()` method defined to run `Trainer.test`.
+W0713 14:26:16.325000 38846 cv_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 38850 closing signal SIGTERM
+E0713 14:26:16.592000 38846 cv_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 1 (pid: 38851) of binary: /home/mutakeks/cv_env/bin/python
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/typing_extensions.py", line 2853, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+main_pl.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-07-13_14:26:16
+  host      : dlcgpu08.rz.ki.privat
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 38851)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+srun: error: dlcgpu08: task 0: Exited with exit code 1

@@ -3,14 +3,18 @@ model:
   target: models.maskgit.MaskGIT
   params:
     adjust_lr_to_batch_size: false
+    patch_size: 14
+    num_tokens: 64
+    image_size: 224
     tokenizer_config:
       # folder: /work/dlcsmall2/mittal-bdd-data/pretrained_tokenizer/2024-08-13T17-12-04_custom_vqgan_f16_4096_dim32_L3_exp6_2542238
-      folder: /work/dlclarge2/mutakeks-storage_titok/dino_v2_64
-      checkpoint_folder: checkpoints/checkpoints/checkpoints/checkpoints/last.ckpt
+      folder: /work/dlclarge2/mutakeks-storage_titok/depth_64
+      checkpoint_folder: checkpoints/checkpoints/checkpoints/last.ckpt
     predictor_config:
       target: Network.transformer.MaskTransformer
       params:
-        img_size: 256
+        img_size: 224
+        patch_size: 14
         hidden_dim: 768
         depth: 16
         heads: 8
@@ -40,11 +44,11 @@ data:
       target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
       params:
         hdf5_paths_file: /work/dlcsmall2/mittal-bdd-data/video_data/train.txt
-        size: 256
+        size: 224
         num_frames: 1
     validation:
       target: Network.Taming.data.custom_multiframe.MultiHDF5DatasetMultiFrame
       params:
         hdf5_paths_file: /work/dlcsmall2/mittal-bdd-data/video_data/val.txt
-        size: 256
+        size: 224
         num_frames: 1
