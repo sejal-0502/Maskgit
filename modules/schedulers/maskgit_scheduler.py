@@ -61,6 +61,32 @@ class UnconditionalMaskGITScheduler(pl.LightningModule):
             mask_code[mask] = torch.randint_like(mask_code[mask], 0, self.codebook_size)
 
         return mask_code, mask
+    
+    def get_fixed_mask_code(self, code, mask_ratio=0.5, value=None):
+        """ Replace the code token by *mask_value* according to the *mask* tensor
+           :param
+            code  -> torch.LongTensor(): bsize * 16 * 16, the unmasked code
+            mask  -> torch.BoolTensor(): bsize * 16 * 16, the binary mask of the mask
+           :return
+            masked_code -> torch.LongTensor(): bsize * 16 * 16, the masked version of the code
+        """
+        batch_size, seq_len = code.shape
+        num_masked_tokens = int(seq_len * mask_ratio)
+
+        masked_code = code.clone()
+        mask = torch.zeros_like(code, dtype=torch.bool)
+
+        for i in range(batch_size):
+            # Randomly select indices to mask
+            indices = torch.randperm(seq_len)[:num_masked_tokens]
+            mask[i, indices] = True
+
+        if value is not None:
+            masked_code[mask] = value
+        else:
+            masked_code[mask] = torch.randint(0, self.codebook_size, (mask.sum(),), device=code.device)
+
+        return masked_code, mask
 
     def adap_sche(self, num_steps=None, schedule_mode=None, leave=False):
         """ Create a sampling scheduler

@@ -11,7 +11,6 @@ import torch.nn.functional as F
 import torchvision.utils as vutils
 import pytorch_lightning as pl
 
-# from Trainer.trainer import Trainer
 from final_titok.MastersProject_TiTok.taming.util import instantiate_from_config
 
 
@@ -28,7 +27,6 @@ class MaskGIT(pl.LightningModule):
 
         # Tokenizer
         self.ae = self.build_tokenizer(tokenizer_config, load_tokenizer_checkpoint)
-        # self.num_tokens = self.image_size // self.patch_size # change may be needed here
         self.num_tokens = num_tokens
         print("Number of tokens:", self.num_tokens)
 
@@ -51,13 +49,13 @@ class MaskGIT(pl.LightningModule):
 
     def train(self, mode=True):
         # Override the train method
-        super().train(mode)  # set the rest of the model to train/eval mode
-        self.ae.eval()  # ensure the submodule is always in eval mode
+        super().train(mode)  
+        self.ae.eval()  
 
     def eval(self):
         # Override the eval method
-        super().eval()  # set the rest of the model to eval mode
-        self.ae.eval()  # ensure the submodule is always in eval mode
+        super().eval() 
+        self.ae.eval()  
 
     # Respobsible for loading the checkpoints 
     def build_tokenizer(self, tokenizer_config, load_checkpoint=True):
@@ -74,7 +72,7 @@ class MaskGIT(pl.LightningModule):
             _ = [checkpoint.pop(k) for k in dk]
             o = model.load_state_dict(checkpoint, strict=False)
             if not (all(["dino" in k for k in o.unexpected_keys]) and all(["dino" in k for k in o.missing_keys])):
-                model.load_state_dict(checkpoint, strict=False) # this will raise an error if the model is not the same except for dino params
+                model.load_state_dict(checkpoint, strict=False) 
         model = model.eval()
 
         try:
@@ -115,24 +113,19 @@ class MaskGIT(pl.LightningModule):
     def get_input(self, batch, k):
         if isinstance(batch, dict):
             x = batch[k]
-            print("Shape of X in get_input in if:", x.shape)
             if len(x.shape) == 3:
                 x = x[..., None]
-            x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format) # [b, c, h, w]
+            x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format) 
         else:
             x = batch
-            print("Shape of X in get_input in else:", x.shape) # [8, 3, 256, 256]
-            # x = 2 * x - 1  # normalize from x in [0,1] to [-1,1] for VQGAN
+           
         return x.float()
 
     def build_similarity_matrix(self):
         embeddings = self.ae.quantize.embedding.weight.data
-        print("Embedding shape:", embeddings.shape)
         # Compute the distance matrix
         norm_embeddings = F.normalize(embeddings, p=2, dim=1)
         similarity_matrix = torch.mm(norm_embeddings, norm_embeddings.t())
-        #similarity_matrix = torch.cdist(norm_embeddings, norm_embeddings, p=2)
-        #torch.fill_diagonal_(similarity_matrix, 0)
         
         # calculate row norm of similarity matrix
         row_norms = torch.norm(similarity_matrix, p=2, dim=1, keepdim=True)
@@ -157,9 +150,7 @@ class MaskGIT(pl.LightningModule):
             masked_code -> torch.LongTensor(): bsize * 16 * 16, the masked version of the code
             mask        -> torch.LongTensor(): bsize * 16 * 16, the binary mask of the mask
         """
-        #print (f'current max ratio {max_masking_ratio}')
         batch_size, seq_len = code.shape
-        # r = torch.rand(code.size(0)) # generate random float for each sample in the batch
         r = torch.rand(batch_size) # generate random float for each sample in the batch
         if mode == "linear":                # linear scheduler
             val_to_mask = r
@@ -185,91 +176,90 @@ class MaskGIT(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x = self.get_input(batch, 'image')
-        print("Shape of input x:", x.shape) # [8, 3, 256, 256]
-        # x = 2 * x - 1  # normalize from x in [0,1] to [-1,1] for VQGAN
+        print("Shape of input x:", x.shape) 
 
         # VQGAN encoding to img tokens
         with torch.no_grad():
-            emb, _, [_, _, code] = self.ae.encode(x) # your input x shape matters here, code is the quantized code indices
-            # emb, middle, last = self.ae.encode(x)
-            print("emb shape:", emb.shape)
-            # print("middle:", middle)          # inspect or print shape if tensor
-            # print("last:", last)              # last is a list [_, _, code]
-            # print("last[0]:", last[0])
-            # print("last[1]:", last[1])
-            print("Code shape:", code.shape)
-            # print("Encoder output shape : ", self.ae.encode(x)) # [8, 16, 16] for 256x256 images with patch size 16
-            # print("code shape before reshape:", code.shape)
-            # print("code numel (total elements):", code.numel())
-
+            emb, _, [_, _, code] = self.ae.encode(x) 
+            
             # code = code.reshape(x.size(0), self.num_tokens, self.num_tokens)
             code = code.reshape(x.size(0), self.num_tokens)
-            print("Code shape 2:", code.shape)
-            print("Code size:", code.size())
-
+            
         # Mask the encoded tokens
-        masked_code, mask = self.scheduler.get_mask_code(code, value=self.mask_value)
-        # masked_code, mask = self.get_mask_code(code, value=self.mask_value, codebook_size=self.codebook_size)
+        masked_code, mask = self.scheduler.get_fixed_mask_code(code, value=self.mask_value)
         
-        pred = self.vit(masked_code)  # The unmasked tokens prediction
-        # Cross-entropy loss
+        pred = self.vit(masked_code)  
+        pred_tokens = pred.argmax(dim=-1)  
+
+        correct = (pred_tokens == code) & mask
+        accuracy = correct.sum().float() / mask.sum().float()        # Cross-entropy loss
         loss = self.criterion(pred.reshape(-1, self.codebook_size + 1), code.view(-1)) / self.grad_acc_steps
 
         self.window_loss.append(loss.data.cpu().numpy().mean())
 
-        # update weight if accumulation of gradient is done
         update_grad = batch_idx % self.grad_acc_steps == self.grad_acc_steps - 1
         if update_grad:
             self.log("train/ce_loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             self.log("train/ce_loss_window", np.array(self.window_loss).sum(), prog_bar=True, logger=True, on_step=True, on_epoch=True)
+            self.log("train/masked_token_accuracy", accuracy, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             self.window_loss = []
+
+        return loss
+    
+    def validation_step(self, batch):
+        x = self.get_input(batch, 'image')
+        
+        with torch.no_grad():
+            emb, _, [_, _, code] = self.ae.encode(x)
+            code = code.reshape(x.size(0), self.num_tokens)
+
+        masked_code, mask = self.scheduler.get_fixed_mask_code(code, value=self.mask_value)
+        pred = self.vit(masked_code)
+        pred_tokens = pred.argmax(dim=-1)  
+
+        correct = (pred_tokens == code) & mask
+        accuracy = correct.sum().float() / mask.sum().float()  # Cross-entropy loss
+        loss = self.criterion(pred.reshape(-1, self.codebook_size + 1), code.view(-1))
+
+        self.log("val/ce_loss", loss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
+        self.log("val/masked_token_accuracy", accuracy, prog_bar=True, logger=True, on_step=True, on_epoch=True)  
 
         return loss
 
     def log_images(self, batch, **kwargs):
         x = self.get_input(batch, 'image')
-        # x = 2 * x - 1  # normalize from x in [0,1] to [-1,1] for VQGAN
 
         # VQGAN encoding to img tokens
         with torch.no_grad():
             emb, _, [_, _, code] = self.ae.encode(x)
-            print("emb shape img logs:", emb.shape)
-            print("code shape img logs:", code.shape)
-            # code = code.reshape(x.size(0), self.num_tokens, self.num_tokens)
             code = code.reshape(x.size(0), self.num_tokens)
             # decode
             ae_recon = self.ae.decode_code(torch.clamp(code, 0, self.codebook_size-1))
-            # ae_recon = self.ae.decode(torch.clamp(code, 0, self.codebook_size-1))
             ae_recon = ae_recon[0] if isinstance(ae_recon, tuple) else ae_recon
             ae_recon = (ae_recon + 1.0) / 2.0
 
         # Mask the encoded tokens
-        masked_code, mask = self.scheduler.get_mask_code(code, value=self.mask_value)
-        print("Mask shape in log_images:", mask.shape) # [8, 64]
-        # masked_code, mask = self.get_mask_code(code, value=self.mask_value, codebook_size=self.codebook_size)
+        masked_code, mask = self.scheduler.get_fixed_mask_code(code, value=self.mask_value)
         
         pred = self.vit(masked_code)  # The unmasked tokens prediction
 
         # Generate sample for visualization
-        # gen_sample = self.sample(num_samples=10)[0]
         gen_sample = self.sample(num_samples=x.size(0))[0]
         gen_sample = gen_sample[0] if isinstance(gen_sample, tuple) else gen_sample
 
         gen_sample = vutils.make_grid(gen_sample, nrow=10, padding=2, normalize=False)
         
         # Show reconstruction
-        unmasked_code = torch.softmax(pred, -1).max(-1)[1] # [8, 64]
+        unmasked_code = torch.softmax(pred, -1).max(-1)[1] 
         N = min(10, x.size(0))
         reco_sample = self.reconstruct(x=x[:N], code=code[:N], unmasked_code=unmasked_code[:N], mask=mask[:N])
         # Add the AE reconstruction 
         chunks = torch.chunk(reco_sample, 3, dim=0)
         reco_sample = torch.cat([chunks[0], ae_recon[:N], *chunks[1:]], 0)
-        # reco_sample = vutils.make_grid(reco_sample, nrow=N, padding=2, normalize=False)
         reco_sample = vutils.make_grid(reco_sample.data, nrow=N, padding=2, normalize=False)
 
         ret = {"sampled": gen_sample, "reconstructed": reco_sample}
         # unnormalize
-        # ret = {k: (v + 1.0) / 2.0 for k, v in ret.items()}
         return ret
 
 
@@ -288,20 +278,12 @@ class MaskGIT(pl.LightningModule):
         l_visual = [x]
         with torch.no_grad():
             if code is not None:
-                # code = code.view(code.size(0), self.num_tokens, self.num_tokens) 
                 code = code.view(code.size(0), self.num_tokens) 
                 # Decoding reel code
                 _x = self.ae.decode_code(torch.clamp(code, 0, self.codebook_size-1)) # full resolution images
-                print("Shape of _x in reconstruct:", _x.shape) # [8, 3, 256, 256]
+                print("Shape of _x in reconstruct:", _x.shape) 
                 _x = _x[0] if isinstance(_x, tuple) else _x  # if dino loss is included
                 if mask is not None:
-                #     # Decoding reel code with mask to hide
-                #     # mask = mask.view(code.size(0), 1, self.num_tokens, self.num_tokens).float()
-                #     mask = mask.view(code.size(0), self.num_tokens).float()
-                #     print("Mask shape in reconstruct:", mask.shape)
-                #     __x2 = _x * (1 - F.interpolate(mask, (self.image_size, self.image_size)).to(self.device))
-                #     l_visual.append(__x2)
-                    print("Mask shape for visualization:", mask.shape) 
                     B, T = mask.shape
                     side = int(math.sqrt(T))
                     assert side * side == T, "Mask shape is not a square"
@@ -312,7 +294,6 @@ class MaskGIT(pl.LightningModule):
                 
             if masked_code is not None:
                 # Decoding masked code
-                # masked_code = masked_code.view(code.size(0), self.num_tokens, self.num_tokens)
                 masked_code = masked_code.view(code.size(0), self.num_tokens)
                 __x = self.ae.decode_code(torch.clamp(masked_code, 0, self.codebook_size-1))
                 __x = __x[0] if isinstance(__x, tuple) else __x  # if dino loss is included
@@ -320,7 +301,6 @@ class MaskGIT(pl.LightningModule):
 
             if unmasked_code is not None:
                 # Decoding predicted code
-                # unmasked_code = unmasked_code.view(code.size(0), self.num_tokens, self.num_tokens)
                 unmasked_code = unmasked_code.view(code.size(0), self.num_tokens)
                 ___x = self.ae.decode_code(torch.clamp(unmasked_code, 0, self.codebook_size-1))
                 ___x = ___x[0] if isinstance(___x, tuple) else ___x # if dino loss is included
@@ -350,22 +330,13 @@ class MaskGIT(pl.LightningModule):
             drop = torch.ones(num_samples, dtype=torch.bool).to(self.device) # 'drop' drops a few tokens from input
             if init_code is not None:  # Start with a pre-define code
                 code = init_code
-                print("Shape of init_code:", init_code.shape)  # [1, 256, 3, 256]
                 mask = (init_code == self.codebook_size).float().view(num_samples, self.num_tokens*self.num_tokens) # mark tokens that need to be predicted
             else:  # Initialize a code
                 if self.mask_value < 0:  # Code initialize with random tokens
-                    # code = torch.randint(0, self.codebook_size, (num_samples, self.num_tokens, self.num_tokens)).to(self.device)
                     code = torch.randint(0, self.codebook_size, (num_samples, self.num_tokens)).to(self.device)
-                    # print("Else if is implemented")
                 else:  # Code initialize with masked tokens
-                    # code = torch.full((num_samples, self.num_tokens, self.num_tokens), self.mask_value).to(self.device)
                     code = torch.full((num_samples, self.num_tokens), self.mask_value).to(self.device) # all the tokens are masked
-                    # print("Else else is implemented")
-                    # print("Code shape:", code.shape) # [4, 64]
-                # mask = torch.ones(num_samples, self.num_tokens*self.num_tokens).to(self.device)
                 mask = torch.ones(num_samples, self.num_tokens).to(self.device)
-                # print("Else is implemented")
-                # print("Mask shape:", mask.shape) # [4, 64]
 
             # Instantiate scheduler
             scheduler = self.scheduler.adap_sche(num_steps, schedule_mode) # (12, arccos) = decode happens accross 12 steps
@@ -387,22 +358,18 @@ class MaskGIT(pl.LightningModule):
                     _w = w * (indice / (len(scheduler)-1))
                     # Classifier Free Guidance
                     logit = (1 + _w) * logit_c - _w * logit_u
-                    # print("Conditioned prediction")
                 else:
                     logit = self.vit(code.clone()) # this means a single forward pass, no confition
-                    # print("Normal prediction") 
 
                 prob = torch.softmax(logit * sm_temp, -1)
                 # Sample the code from the softmax prediction
                 distri = torch.distributions.Categorical(probs=prob)
                 pred_code = distri.sample()
 
-                # conf = torch.gather(prob, 2, pred_code.view(num_samples, self.num_tokens*self.num_tokens, 1))
                 conf = torch.gather(prob, 2, pred_code.view(num_samples, self.num_tokens, 1)) # extract softmax probab of predited token
 
                 if randomize == "linear":  # add gumbel noise decreasing over the sampling process
                     ratio = (indice / (len(scheduler)-1))
-                    # rand = r_temp * np.random.gumbel(size=(num_samples, self.num_tokens*self.num_tokens)) * (1 - ratio)
                     rand = r_temp * np.random.gumbel(size=(num_samples, self.num_tokens)) * (1 - ratio)
                     conf = torch.log(conf.squeeze()) + torch.from_numpy(rand).to(self.device)
                 elif randomize == "warm_up":  # chose random sample for the 2 first steps
@@ -418,17 +385,13 @@ class MaskGIT(pl.LightningModule):
                 tresh_conf = tresh_conf[:, -1]
 
                 # replace the chosen tokens, i.e updates the code and mask with the predicted tokens
-                # conf = (conf >= tresh_conf.unsqueeze(-1)).view(num_samples, self.num_tokens, self.num_tokens)
                 conf = (conf >= tresh_conf.unsqueeze(-1)).view(num_samples, self.num_tokens)
-                # f_mask = (mask.view(num_samples, self.num_tokens, self.num_tokens).float() * conf.view(num_samples, self.num_tokens, self.num_tokens).float()).bool()
                 f_mask = (mask.view(num_samples, self.num_tokens).float() * conf.view(num_samples, self.num_tokens).float()).bool()
                 code[f_mask] = pred_code.view(num_samples, self.num_tokens)[f_mask]
 
                 # update the mask
                 for i_mask, ind_mask in enumerate(indice_mask):
                     mask[i_mask, ind_mask] = 0
-                # l_codes.append(pred_code.view(num_samples, self.num_tokens, self.num_tokens).clone())
-                # l_mask.append(mask.view(num_samples, self.num_tokens, self.num_tokens).clone())
                 l_codes.append(pred_code.view(num_samples, self.num_tokens).clone())
                 l_mask.append(mask.view(num_samples, self.num_tokens).clone())
 

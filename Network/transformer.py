@@ -171,7 +171,7 @@ class MaskTransformer(nn.Module):
                 logit:         -> torch.FloatTensor: bsize x path_size*path_size * 1024, the predicted logit
                 attn:          -> list(torch.FloatTensor): list of attention for visualization
         """
-        print("Img_token shape in MaskTransformer:", img_token.shape) # [b, 16, 16]
+        # print("Img_token shape in MaskTransformer:", img_token.shape) # [b, 16, 16] --> [b, 64]
         # b, w, h = img_token.size() # [b, 16, 16]
         b, n = img_token.size() # [b, 64]
         input = img_token.view(b, -1) # [b, 64]
@@ -191,7 +191,7 @@ class MaskTransformer(nn.Module):
 
         if return_attn:  # return list of attention
             return logit[:, :self.num_tokens * self.num_tokens, :self.codebook_size + 1], attn
-        print("Logit shape in MaskTransformer:", logit.shape) # [b, 64, 16385]
+        # print("Logit shape in MaskTransformer:", logit.shape) # [b, 64, 16385] 
         return logit[:, :self.num_tokens*self.num_tokens, :self.codebook_size+1]
 
 

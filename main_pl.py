@@ -101,7 +101,7 @@ def get_parser(**parser_kwargs):
         "--resume",
         type=str,
         const=True,
-        default="",
+        default="/work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints/last.ckpt",
         nargs="?",
         help="resume from logdir or checkpoint in logdir",
     )
@@ -146,7 +146,7 @@ def get_parser(**parser_kwargs):
         "-e",
         "--num_epochs",
         type=int,
-        default=30,
+        default=40,
         help="number of epochs",
     )
     parser.add_argument(
@@ -225,7 +225,7 @@ def get_parser(**parser_kwargs):
     parser.add_argument(
         "--logdir",
         type=str,
-        default="/work/dlclarge2/mutakeks-titok/maskgit_test",  # default value
+        default="",  # default value
         help="Directory to save vqgan logs"
     )
 
@@ -366,19 +366,6 @@ if __name__ == "__main__":
         _tmp = logdir.split("/")
         nowname = _tmp[-1]
     else:
-        # if opt.name:
-        #     name = "_"+opt.name
-        # elif opt.base:
-        #     cfg_fname = os.path.split(opt.base[0])[-1]
-        #     cfg_name = os.path.splitext(cfg_fname)[0]
-        #     name = "_"+cfg_name
-        # else:
-        #     name = ""
-        # nowname = now+name+opt.postfix+"_"+get_jobid()
-        # try:
-        #     logdir = os.path.join(os.environ.get("MASKGIT_WORK_DIR", "logs"), nowname)
-        # except KeyError:
-        #     logdir = os.path.join("logs", nowname)
         if opt.logdir:
             logdir = opt.logdir  # Use the custom log directory path provided by user
         else:
@@ -405,17 +392,10 @@ if __name__ == "__main__":
         # default to ddp
         trainer_config["distributed_backend"] = "ddp"
         
-        
-
-        # for k in nondefault_trainer_args(opt):
-        #     trainer_config[k] = getattr(opt, k)
-        # trainer_config["gpu"] = 0
         if opt.n_gpus == 0:
             del trainer_config["distributed_backend"]
             cpu = True
         else:
-            # gpuinfo = trainer_config["gpus"]
-            # print(f"Running on GPUs {gpuinfo}")
             cpu = False
         # trainer_opt = argparse.Namespace(**trainer_config)
         lightning_config.trainer = trainer_config
@@ -446,18 +426,9 @@ if __name__ == "__main__":
 
         # profiler        
         if opt.profiler:
-            # profiler = PyTorchProfiler(
-            # on_trace_ready = torch.profiler.tensorboard_trace_handler(logdir),
-            # schedule=torch.profiler.schedule(skip_first=5, wait=1, warmup=1, active=3, repeat=2),
-            # # record_functions=
-            # )
-            # trainer_kwargs["profiler"] = profiler
-            # trainer_kwargs["profiler"] = "simple"
             from callbacks.profilers import SimpleProfilerCustom
             profiler = SimpleProfilerCustom(dirpath=logdir, filename="profile", burn_in_dict={"run_training_batch": 100})
             trainer_kwargs["profiler"] = profiler
-
-        # trainer_kwargs["plugins"]= [SLURMEnvironment(requeue_signal=signal.SIGHUP)]
         
         # adding callbacks
         trainer_kwargs["callbacks"] = [
@@ -470,9 +441,7 @@ if __name__ == "__main__":
             TQDMProgressBar(refresh_rate=100 if os.environ.get("SLURM_JOB_ID") else 1),
             PeriodicCheckpoint(every=5, end=150, dirpath=ckptdir)
         ]
-        # if opt.tsne_epoch_frequency is not None and opt.tsne_epoch_frequency > 0:
-        #     trainer_kwargs["callbacks"].append(CodebookTSNELogger(epoch_frequency=opt.tsne_epoch_frequency))
-
+        
         trainer = Trainer( **trainer_kwargs)
 
         # data

@@ -1,5 +1,5 @@
-cpu-bind=MASK - dagobert, task  0  0 [1639]: mask 0x40000400 set
-cpu-bind=MASK - dagobert, task  0  0 [1656]: mask 0x40000400 set
+cpu-bind=MASK - donkeykong, task  0  0 [1609]: mask 0x40000004000 set
+cpu-bind=MASK - donkeykong, task  0  0 [1634]: mask 0x40000004000 set
 /home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py:208: FutureWarning: The module torch.distributed.launch is deprecated
 and will be removed in future. Use torchrun.
 Note that --use-env is set by default in torchrun.
@@ -9,10 +9,10 @@ https://pytorch.org/docs/stable/distributed.html#launch-utility for
 further instructions
 
   main()
-W0719 11:31:14.597000 1656 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] 
-W0719 11:31:14.597000 1656 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] *****************************************
-W0719 11:31:14.597000 1656 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
-W0719 11:31:14.597000 1656 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] *****************************************
+W0802 09:01:08.883000 1634 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] 
+W0802 09:01:08.883000 1634 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] *****************************************
+W0802 09:01:08.883000 1634 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0802 09:01:08.883000 1634 cv_env/lib/python3.10/site-packages/torch/distributed/run.py:793] *****************************************
 [rank: 1] Seed set to 42
 [rank: 0] Seed set to 42
 /home/mutakeks/cv_env/lib/python3.10/site-packages/timm/models/layers/__init__.py:48: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
@@ -21,29 +21,24 @@ W0719 11:31:14.597000 1656 cv_env/lib/python3.10/site-packages/torch/distributed
   warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
 /home/mutakeks/cv_env/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
   warnings.warn(
-/home/mutakeks/cv_env/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
-  warnings.warn(msg)
 /home/mutakeks/cv_env/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
   warnings.warn(
 /home/mutakeks/cv_env/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
   warnings.warn(msg)
+/home/mutakeks/cv_env/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
 /home/mutakeks/final_titok/MastersProject_TiTok/taming/modules/losses/lpips.py:29: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
   self.load_state_dict(torch.load(ckpt, map_location=torch.device("cpu")), strict=False)
 /home/mutakeks/final_titok/MastersProject_TiTok/taming/modules/losses/lpips.py:29: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
   self.load_state_dict(torch.load(ckpt, map_location=torch.device("cpu")), strict=False)
-/home/mutakeks/final_titok/MastersProject_TiTok/taming/models/vqgan_dino.py:316: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
-  pretrained_model = torch.load(pretrained_encoder_model, map_location='cuda')
-/home/mutakeks/final_titok/MastersProject_TiTok/taming/models/vqgan_dino.py:316: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
-  pretrained_model = torch.load(pretrained_encoder_model, map_location='cuda')
-/home/mutakeks/maskgit_1d/maskgit_img/models/maskgit.py:71: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+/home/mutakeks/maskgit_1d/maskgit_img/models/maskgit.py:69: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
   checkpoint = torch.load(os.path.join(tokenizer_folder, checkpoint_folder), map_location="cpu")["state_dict"]
-/home/mutakeks/maskgit_1d/maskgit_img/models/maskgit.py:71: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+/home/mutakeks/maskgit_1d/maskgit_img/models/maskgit.py:69: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
   checkpoint = torch.load(os.path.join(tokenizer_folder, checkpoint_folder), map_location="cpu")["state_dict"]
 Using 16bit Automatic Mixed Precision (AMP)
 GPU available: True (cuda), used: True
 TPU available: False, using: 0 TPU cores
 HPU available: False, using: 0 HPUs
-/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/configuration_validator.py:68: You passed in a `val_dataloader` but have no `validation_step`. Skipping val loop.
 Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/2
 ----------------------------------------------------------------------------------------------------
 distributed_backend=nccl
@@ -51,37 +46,39 @@ All distributed processes registered. Starting with 2 processes
 ----------------------------------------------------------------------------------------------------
 
 Initializing distributed: GLOBAL_RANK: 1, MEMBER: 2/2
-2025-07-19 11:34:15.833310: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F FMA
+2025-08-02 09:03:48.870923: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
 To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2025-07-19 11:34:17.366606: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-2025-07-19 11:34:22.111334: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
-2025-07-19 11:34:22.112740: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
-2025-07-19 11:34:22.112995: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
-Restoring states from the checkpoint path at /work/dlclarge2/mutakeks-titok/maskgit_1d_depth64/checkpoints/checkpoints/checkpoints/checkpoints/last.ckpt
-/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/work/dlclarge2/mutakeks-titok/maskgit_1d_depth64/checkpoints/checkpoints/checkpoints/checkpoints' to '/work/dlclarge2/mutakeks-titok/maskgit_1d_depth64/checkpoints/checkpoints/checkpoints/checkpoints/checkpoints', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
+2025-08-02 09:03:52.535596: E tensorflow/stream_executor/cuda/cuda_blas.cc:2981] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-08-02 09:04:01.738531: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory
+2025-08-02 09:04:01.739855: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory
+2025-08-02 09:04:01.740139: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+Restoring states from the checkpoint path at /work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints/last.ckpt
+/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints' to '/work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints/checkpoints', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
 LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0,1]
-/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/work/dlclarge2/mutakeks-titok/maskgit_1d_depth64/checkpoints/checkpoints/checkpoints/checkpoints' to '/work/dlclarge2/mutakeks-titok/maskgit_1d_depth64/checkpoints/checkpoints/checkpoints/checkpoints/checkpoints', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
+/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints' to '/work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints/checkpoints', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
 LOCAL_RANK: 1 - CUDA_VISIBLE_DEVICES: [0,1]
 
   | Name      | Type                               | Params | Mode 
 -------------------------------------------------------------------------
-0 | ae        | VQModel2WithEntropyDINOLossMAEinit | 146 M  | eval 
+0 | ae        | VQModel2WithEntropyDINOLossMAEinit | 149 M  | eval 
 1 | vit       | MaskTransformer                    | 118 M  | train
 2 | criterion | CrossEntropyLoss                   | 0      | train
 3 | scheduler | UnconditionalMaskGITScheduler      | 0      | train
 -------------------------------------------------------------------------
-249 M     Trainable params
+253 M     Trainable params
 14.7 M    Non-trainable params
-264 M     Total params
-1,058.826 Total estimated model params size (MB)
+268 M     Total params
+1,072.183 Total estimated model params size (MB)
 260       Modules in train mode
-482       Modules in eval mode
-Restored all states from the checkpoint at /work/dlclarge2/mutakeks-titok/maskgit_1d_depth64/checkpoints/checkpoints/checkpoints/checkpoints/last.ckpt
+500       Modules in eval mode
+Restored all states from the checkpoint at /work/dlclarge2/mutakeks-titok/maskgit_1d_mae64_big/checkpoints/checkpoints/checkpoints/last.ckpt
 /home/mutakeks/cv_env/lib/python3.10/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 8 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
   warnings.warn(
 /home/mutakeks/cv_env/lib/python3.10/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 8 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
   warnings.warn(
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/loops/training_epoch_loop.py:221: You're resuming from a checkpoint that ended before the epoch ended and your dataloader is not resumable. This can cause unreliable results if further training is done. Consider using an end-of-epoch checkpoint or make your dataloader resumable by implementing the `state_dict` / `load_state_dict` interface.
+/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('val/ce_loss', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
+/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('val/masked_token_accuracy', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/ce_loss', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/ce_loss_window', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
-/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:384: `ModelCheckpoint(monitor='val/ce_loss')` could not find the monitored key in the returned metrics: ['train/ce_loss', 'train/ce_loss_step', 'train/ce_loss_window', 'train/ce_loss_window_step', 'lr-AdamW', 'train/ce_loss_epoch', 'train/ce_loss_window_epoch', 'epoch', 'step']. HINT: Did you call `log('val/ce_loss', value)` in the `LightningModule`?
+/home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/masked_token_accuracy', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.

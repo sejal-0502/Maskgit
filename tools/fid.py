@@ -9,6 +9,7 @@ import yaml
 import random
 import PIL
 from PIL import Image
+from scipy.linalg import sqrtm
 from PIL import ImageDraw, ImageFont
 import numpy as np
 # also disable grad to save memory
@@ -31,7 +32,6 @@ from omegaconf import OmegaConf
 # from taming.models.vqgan_with_entropy_loss import VQModel2WithEntropyLoss
 
 from pytorch_fid.fid_score import calculate_fid_given_paths
-from maskgit_1d.maskgit_img.tools.compute_FID import calculate_fid, ImageFolderDataset, get_inception_features
 
 try:
   sys.path.append('../Depth-Anything')
@@ -59,7 +59,7 @@ def instantiate_from_config(config):
     print("Target is : ", config["target"])
     return get_obj_from_str(config["target"])(**config.get("params", dict()))
 
-def load_vqgan(config, ckpt_path=None, is_gumbel=False):
+def load_maskgit(config, ckpt_path=None, is_gumbel=False):
 
   model = instantiate_from_config(config.model)
   # print(f"Model: {model.__class__.__name__} with config: {config.model}")
@@ -70,54 +70,25 @@ def load_vqgan(config, ckpt_path=None, is_gumbel=False):
     # remove weights that contain "dino"
     sd = {k: v for k, v in sd.items() if "dino" not in k}
     missing, unexpected = model.load_state_dict(sd, strict=False)
-    print("missing keys:", missing)
-    print("unexpected keys:", unexpected)
-
-    # loaded_keys = [k for k in sd.keys() if k in model.state_dict()]
-    # print("Loaded keys:", loaded_keys)
+    # print("missing keys:", missing)
+    # print("unexpected keys:", unexpected)
   return model
 
-def preprocess_vqgan(x):
+def preprocess_maskgit(x):
   x = 2.*x - 1.
   return x
 
-def unnormalize_vqgan(x):
+def unnormalize_maskgit(x):
    if isinstance(x, torch.Tensor):
      x = x.cpu().detach().numpy()
    image = ((x+1)*127.5).astype(np.uint8)
    return image
 
-# def reconstruct_with_vqgan(x, model, hist, codebook_size):
-#     # could also use model(x) for reconstruction but use explicit encoding and decoding here
-#     codes, _, indices = model.encode(x)
-#     if "vqgan_hierarchical_multires" in str(model.__class__):
-#       codes = codes[1]; indices = indices[1][-1]
-#       reconst_sample = model.decode(codes, i=1)
-#     else:
-#       indices = indices[-1]
-#       reconst_sample = model.decode(codes)
-#     if isinstance(reconst_sample, tuple):
-#         reconst_sample = reconst_sample[0]
-#     if isinstance(reconst_sample, tuple):
-#         reconst_sample = reconst_sample[0]
-#     #print(f"VQGAN --- {model.__class__.__name__}: latent shape: {z.shape[2:]}")
-#     if len(indices.shape) > 1:
-#       indices = indices.view(-1)
-#     for index in indices:
-#         if 0 <= index < codebook_size:
-#             hist[index.int()] += 1
-#     return reconst_sample, hist, indices, codes
-
 def generate_with_maskgit(input_indices, model):
     # could also use model(x) for reconstruction but use explicit encoding and decoding here
-    print("Input Indices shape:", input_indices.shape)
+    # print("Input Indices shape:", input_indices.shape)
     x, code_inds, mask_inds = model.sample()
     return x, code_inds, mask_inds
-
-# def create_histogram(codebook_size):
-#     """Create a histogram with 1025 bins (for indices 0 to 1024)."""
-#     # Initialize histogram with zeros
-#     return [0] * codebook_size
 
 def preprocess(img, target_image_size=256, map_dalle=True):
     img = PIL.Image.open(img)
@@ -135,148 +106,47 @@ def preprocess(img, target_image_size=256, map_dalle=True):
       img = map_pixels(img)
     return img
 
-# def reconstruction_pipeline(model, image, hist, size, codebook_size):
-#   if len(image.shape) == 3:
-#     x_vqgan = torch.tensor(image).permute(2, 0, 1).unsqueeze(0).to(DEVICE)
-#   else:
-#     x_vqgan = image.to(DEVICE)
-#   reconstructed, hist, indices, codes = reconstruct_with_vqgan(x_vqgan, model, hist, codebook_size)
-#   reconstructed = reconstructed[0].cpu().permute(1, 2, 0)
-#   reconstructed = ((reconstructed+1)*127.5).clamp_(0, 255).numpy().astype(np.uint8)
-#   return reconstructed, hist, indices, x_vqgan, codes
-
 def generation_pipeline(model, image, size):
   if len(image.shape) == 3:
     x_maskgit = torch.tensor(image).permute(2, 0, 1).unsqueeze(0).to(DEVICE)
     # x_maskgit = torch.tensor(image).permute(2, 0, 1).unsqueeze(0).to(DEVICE)
-    print("Generation pipeline shape :", x_maskgit.shape)
+    # print("Generation pipeline shape :", x_maskgit.shape)
   else:
     x_maskgit = image.to(DEVICE)
   generated, code_indices, mask_codes = generate_with_maskgit(x_maskgit, model)
-  print("Generated 1 shape:", generated.shape)
+  # print("Generated 1 shape:", generated.shape)
   generated = generated[0].cpu().permute(1, 2, 0)
   # generated = generated[0].cpu().permute(0, 1, 2)
-  print("Generated 2 shape:", generated.shape)
+  # print("Generated 2 shape:", generated.shape)
   generated = ((generated+1)*127.5).clamp_(0, 255).numpy().astype(np.uint8)
-  print("Generated 3 shape:", generated.shape)
+  # print("Generated 3 shape:", generated.shape)
   return generated, code_indices, mask_codes
-
-
-# def plot_histogram(hist, exp_dir, save_path = 'histogram.png'):
-#     """
-#     Plot the histogram.
-#     :param hist: The histogram to plot.
-#     """
-#     plt.figure(figsize=(10, 5), dpi=1000)
-#     plt.bar(range(len(hist)), hist)
-#     plt.title('Histogram of Indices')
-#     plt.xlabel('Index')
-#     plt.ylabel('Frequency')
-#     hist_path = os.path.join(exp_dir, save_path)
-#     plt.savefig(hist_path)
 
 from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.spatial.distance import pdist
-
-# def cluster_the_indices(indices, codes, max_d=1.8): # codes is (1, 256, 16, 16)
-#     unique_elements, inverse = np.unique(indices, return_inverse=True)
-#     indices = inverse
-#     codes = codes.squeeze(0).reshape(-1, codes.shape[2]*codes.shape[3]).transpose(0,1).cpu().numpy()
-#     distance_matrix = pdist(codes, metric='cosine')
-#     Z = linkage(distance_matrix, 'ward')
-#     max_d = max_d
-#     clusters = fcluster(Z, max_d, criterion='distance')
-#     # new index array with mapped clusters
-#     new_indices = np.zeros_like(indices)
-#     for i, c in enumerate(clusters):
-#         new_indices[indices==i] = c
-#     print(f'Number of clusters: {len(np.unique(clusters))}')
-#     return new_indices
-
-# def create_index_visualization(img, indices, codes, patch_size, colors, save_dir, upscale_factor=4, idx=0):
-#     """
-#     Create a visualization of the indices.
-#     :param img: The input image.
-#     :param indices: The indices.
-#     :param patch_size: The size of the patch.
-#     :return: The visualization.
-#     """
-#     # convert shape from (3, 224, 224) to (224, 224, 3)
-#     # img = (img * 255).astype(np.uint8)
-#     # img = np.transpose(img, (1, 2, 0))
-#     original_size = img.shape[:2]
-#     upscaled_size = (original_size[0] * upscale_factor, original_size[1] * upscale_factor)
-#     pil_img = Image.fromarray(img).resize(upscaled_size, resample=PIL.Image.NEAREST)
-#     draw = ImageDraw.Draw(pil_img)
-    
-#     indices = indices.reshape(1, 16, 16).cpu().numpy()
-#     # Attempt to use a default font, or fall back to PIL's default if not specified
-#     try:
-#         font = ImageFont.truetype("arial.ttf", 2)
-#     except IOError:
-#         font = ImageFont.load_default()
-
-#     for i in range(indices.shape[1]): # 14
-#         for j in range(indices.shape[2]): # 14
-#             index = indices[0, i, j]
-#             color = colors[index]
-#             # Define the patch area
-#             start_x, start_y = i * patch_size*upscale_factor, j * patch_size*upscale_factor
-#             end_x, end_y = start_x + patch_size*upscale_factor, start_y + patch_size*upscale_factor
-#             # Overlay color with transparency
-#             overlay = (0.8 * np.array(pil_img.crop((start_y, start_x, end_y, end_x))) + 0.2 * color).astype(np.uint8)
-#             pil_img.paste(Image.fromarray(overlay), (start_y, start_x))
-#             # Draw index number
-#             draw.text((start_y + 5, start_x + 5), str(index), fill="black", font=font)
-
-#     img_vis = np.array(pil_img)
-#     img_vis = Image.fromarray(img_vis.astype(np.uint8))
-#     img_vis_path_dir = os.path.join(save_dir, 'semantic_mapping')
-#     if not os.path.exists(img_vis_path_dir):
-#       os.makedirs(img_vis_path_dir)
-#     img_vis_path = os.path.join(img_vis_path_dir, f'index_{idx}.png')
-#     img_vis.save(img_vis_path)
-
-# def save_patches_by_index(image, indices, save_dir, idx, patch_size=16, upscale_factor=8):
-#     """
-#     Save patches by index.
-#     :param image: The input image.
-#     :param indices: The indices.
-#     :param patch_size: The size of the patch.
-#     :param save_dir: The root directory to save the patches.
-#     :param upscale_factor: The upscale factor.
-#     """
-#     unique_indices = np.unique(indices)
-#     original_size = image.shape[:2]
-#     upscaled_size = (original_size[0] * upscale_factor, original_size[1] * upscale_factor)
-#     image = Image.fromarray(image).resize(upscaled_size, resample=PIL.Image.NEAREST)
-#     image = np.asarray(image)
-
-#     save_dir = os.path.join(save_dir, 'patches')
-#     if not os.path.exists(save_dir):
-#         os.makedirs(save_dir)
-    
-#     for index in unique_indices:
-#         index_dir = os.path.join(save_dir, f'index_{index}')
-#         if not os.path.exists(index_dir):
-#             os.makedirs(index_dir)
-        
-#         # Find all patches corresponding to the current index
-#         positions = np.where(indices == index)
-#         for pos in zip(*positions):
-#             row = pos[0]//(original_size[0]//patch_size)
-#             col = pos[0]%(original_size[0]//patch_size) 
-#             start_x, start_y = row * patch_size*upscale_factor, col * patch_size*upscale_factor
-#             end_x, end_y = start_x + patch_size*upscale_factor, start_y + patch_size*upscale_factor
-#             patch = image[start_x:end_x, start_y:end_y, :]
-#             patch_img = Image.fromarray(patch)
-#             patch_img.save(os.path.join(index_dir, f'idx_{idx}_patch_{row}_{col}.png'))
 
 def get_inception_model():
     model = inception_v3(pretrained=True)
     model.fc = torch.nn.Identity()  # Remove the classification layer
     model = model.to(DEVICE)
     return model
+
+class ImageFolderDataset(Dataset):
+    def __init__(self, folder_path, transform=None):
+        self.folder_path = folder_path
+        self.transform = transform
+        self.image_filenames = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+        self.image_filenames.sort()
+
+    def __len__(self):
+        return len(self.image_filenames)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.folder_path, self.image_filenames[idx])
+        image = Image.open(img_path).convert('RGB')
+        if self.transform is not None:
+            image = self.transform(image)
+        return image
 
 class ImageRFIDDataset(ImageFolderDataset):
     def __init__(self, folder_path, generated_folder, transform=None):
@@ -292,7 +162,40 @@ class ImageRFIDDataset(ImageFolderDataset):
             orig_image = self.transform(orig_image)
             gen_image = self.transform(gen_image)
         return orig_image, gen_image
+    
+# Function to calculate the FID score
+def calculate_fid(act1, act2):
+    # Calculate mean and covariance statistics
+    mu1, sigma1 = act1.mean(axis=0), np.cov(act1, rowvar=False)
+    mu2, sigma2 = act2.mean(axis=0), np.cov(act2, rowvar=False)
+
+    # Calculate sum squared difference between means
+    ssdiff = np.sum((mu1 - mu2)**2.0)
+
+    # Calculate sqrt of product between covariances
+    covmean = sqrtm(sigma1.dot(sigma2))
+    
+    # Check and correct imaginary numbers from sqrt
+    if np.iscomplexobj(covmean):
+        covmean = covmean.real
+
+    # Calculate score
+    fid = ssdiff + np.trace(sigma1 + sigma2 - 2.0 * covmean)
+    return fid
        
+# Function to get the features from images using Inception model
+def get_inception_features(images, model, device, transform):
+    model.eval()
+    features = []
+
+    with torch.no_grad():
+        for img in tqdm(images):
+            img = img.to(device).unsqueeze(0)
+            feature = model(img)[0]
+            features.append(feature.cpu().numpy())
+
+    features = np.vstack(features)
+    return features
 
 def compute_rFID_score(model, path_original_images, path_recons_images):
     
@@ -305,7 +208,6 @@ def compute_rFID_score(model, path_original_images, path_recons_images):
     ])
 
     original_images = ImageFolderDataset(folder_path=path_original_images, transform=transform)
-    # get reconstructed images from the VQGAN model
 
     reconstructed_images = ImageFolderDataset(folder_path=path_recons_images, transform=transform)
     reconstructed_images.image_filenames = original_images.image_filenames  # let's make sure they match...
@@ -314,6 +216,7 @@ def compute_rFID_score(model, path_original_images, path_recons_images):
 
     if True:
       fid_score = calculate_fid_given_paths([path_original_images, path_recons_images], 16, DEVICE, 2048)
+      # print("--------------------This fid is implemented")
     else:
       print(">> Getting Inception Features...")
       original_features = get_inception_features(original_images, inception_model, DEVICE, transform)
@@ -345,14 +248,6 @@ def process_images(model, dataset, num_images, codebook_size, exp_dir):
         os.remove(os.path.join(path_original_images, f))
       for f in os.listdir(path_gen_images):
         os.remove(os.path.join(path_gen_images, f))
-     
-      # compute_rFID_score(model, path_original_images, num_images, exp_dir)
-
-    # Create a histogram with 1025 bins (for indices 0 to 1024):
-    # histo = create_histogram(codebook_size)
-
-    # Get all image files from the input folder
-    # all_images = [file for file in os.listdir(input_folder) if file.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
     # Randomly select num_images from the list
     selected_images = random.sample(range(len(dataset)), num_images)
@@ -370,47 +265,21 @@ def process_images(model, dataset, num_images, codebook_size, exp_dir):
         # input_path = os.path.join(input_folder, image_name)
         
         sample = dataset[image_idx]
-        print("Sample type:", type(sample))
-        print("Sample shape:", sample.shape if isinstance(sample, torch.Tensor) else None)
+        # print("Sample type:", type(sample))
+        # print("Sample shape:", sample.shape if isinstance(sample, torch.Tensor) else None)
 
-        #image = sample.unsqueeze(0)
-        #input_path = sample['file_path_']
-        # image = sample['image']
         image = sample.permute(1, 2, 0)
 
         # Modify the image
         generated, code_indices, mask_codes = generation_pipeline(model, image, size=256)
-        print("Generated process_img shape:", generated.shape)
+        # print("Generated process_img shape:", generated.shape)
         
-
-        # if args.cluster_indices:
-        #    indices = cluster_the_indices(indices.cpu().numpy(), codes, max_d=1.9)
-        #    indices = torch.from_numpy(indices).cuda() 
-
-        # # create visualization of indices
-        # if args.create_index_visualization:
-        #   create_index_visualization(img=unnormalize_vqgan(image),
-        #                             codes=codes, 
-        #                             indices=indices, 
-        #                             patch_size=16, 
-        #                             colors=colors,
-        #                             upscale_factor=4, 
-        #                             save_dir=exp_dir, 
-        #                             idx=image_idx)
-
-        #save patches by index
-        # if args.save_patches_by_index:
-        #   save_patches_by_index(image=unnormalize_vqgan(image),
-        #                       indices=indices.cpu().numpy(),
-        #                       save_dir=exp_dir,
-        #                       idx=image_idx)
-          
         if args.compute_rFID_score:
           # save original images for rFID score TODO use orig image names
           # save_image(x_vqgan[0], os.path.join(path_original_images, f"original_image_{image_idx}.jpg"))
-          print("Original image shape:", image.shape)
-          plt.imsave(os.path.join(path_original_images, f"image_{image_idx}.png"), unnormalize_vqgan(image))
-          print("Generated image shape:", generated.shape)
+          # print("Original image shape:", image.shape)
+          plt.imsave(os.path.join(path_original_images, f"image_{image_idx}.png"), unnormalize_maskgit(image))
+          # print("Generated image shape:", generated.shape)
           plt.imsave(os.path.join(path_gen_images, f"image_{image_idx}.png"), generated)
           
     if args.compute_rFID_score:      
@@ -421,9 +290,8 @@ def process_images(model, dataset, num_images, codebook_size, exp_dir):
 
 def main(args):
   config = load_config(args.config_path, display=False) #99.85% zeros 
-  # model = load_vqgan(config, ckpt_path=args.ckpt_path).to(DEVICE)
-  print(f"Checkpoint exists? {os.path.exists(args.ckpt_path)}")
-  model = load_vqgan(config, ckpt_path=args.ckpt_path)
+  # print(f"Checkpoint exists? {os.path.exists(args.ckpt_path)}")
+  model = load_maskgit(config, ckpt_path=args.ckpt_path)
   # print("Loaded Model : ", model)
   model = model.to(DEVICE)
   try:
@@ -476,7 +344,7 @@ if __name__ == "__main__":
     if not os.path.exists(args.exp_dir):
       os.makedirs(args.exp_dir)
   except:
-    args.exp_dir = './visualizations_gen/default'
+    args.exp_dir = '/work/dlclarge2/mutakeks-titok/visualizations_gen/default'
   
   print(f"\n> Loading config from: {args.config_path}")
   print(f"> Loading checkpoint from: {args.ckpt_path}")
