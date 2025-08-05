@@ -82,3 +82,58 @@ Restored all states from the checkpoint at /work/dlclarge2/mutakeks-titok/maskgi
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/ce_loss', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/ce_loss_window', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
 /home/mutakeks/cv_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/result.py:434: It is recommended to use `self.log('train/masked_token_accuracy', ..., sync_dist=True)` when logging on epoch level in distributed setting to accumulate the metric across devices.
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd-donkeykong: error: *** STEP 20901761.0 ON donkeykong CANCELLED AT 2025-08-03T09:00:54 DUE TO TIME LIMIT ***
+slurmstepd-donkeykong: error: *** JOB 20901761 ON donkeykong CANCELLED AT 2025-08-03T09:00:54 DUE TO TIME LIMIT ***
+--- Logging error ---
+Traceback (most recent call last):
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 696, in run
+    result = self._invoke_run(role)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 855, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1634 got signal: 15
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/logging/__init__.py", line 1100, in emit
+    msg = self.format(record)
+  File "/usr/lib/python3.10/logging/__init__.py", line 943, in format
+    return fmt.format(record)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/_logging/_internal.py", line 779, in format
+    artifact_name = getattr(logging.getLogger(record.name), "artifact_name", None)
+  File "/usr/lib/python3.10/logging/__init__.py", line 2071, in getLogger
+    def getLogger(name=None):
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1634 got signal: 15
+Call stack:
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/typing_extensions.py", line 2853, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/run.py", line 910, in run
+    elastic_launch(
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/mutakeks/cv_env/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 704, in run
+    logger.warning("Received %s death signal, shutting down workers", e.sigval)
+Message: 'Received %s death signal, shutting down workers'
+Arguments: (<Signals.SIGTERM: 15>,)
+W0803 09:00:54.315000 1634 cv_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1709 closing signal SIGTERM
+W0803 09:00:54.321000 1634 cv_env/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1710 closing signal SIGTERM
+[rank: 1] Received SIGTERM: 15
