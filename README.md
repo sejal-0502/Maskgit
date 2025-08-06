@@ -69,4 +69,12 @@ srun python -m torch.distributed.launch --nproc_per_node=2 main_pl.py \
 python tools/fid.py --config_path /work/dlclarge2/mutakeks-titok/maskgit/config.yaml --ckpt_path /work/dlclarge2/mutakeks-titok/maskgit/checkpoints/last.ckpt --compute_rFID_score
 
 ```
+### Compute FID score
+```
+python tools/compute_codebook_usage.py --config_path /work/dlclarge2/mutakeks-titok/mae_16/config.yaml --ckpt_path /work/dlclarge2/mutakeks-titok/mae_16/checkpoints/last.ckpt --compute_rFID_score
+```
+
+## Image Reconstruction
+
+[1d-tokenizer](https://github.com/sejal-0502/1d-tokenizer.git)
 
